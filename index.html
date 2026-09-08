@@ -1,3 +1,5 @@
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <div id="tracker-root"></div>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap');
@@ -123,12 +125,24 @@
     }
   ];
 
-  const STORAGE_KEY = "aws-university-task-tracker-v5";
+  const firebaseConfig = {
+    apiKey: "AIzaSyCJ78nLVtyNKy0blEF95KaIpDtVWyjz3tE",
+    authDomain: "aws-university-tracker.firebaseapp.com",
+    projectId: "aws-university-tracker",
+    storageBucket: "aws-university-tracker.firebasestorage.app",
+    messagingSenderId: "674343725955",
+    appId: "1:674343725955:web:5bf2bb23f40f3ea717e4b6"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const docRef = db.collection("trackers").doc("aws-university-task-tracker-v5");
+
   const root = document.getElementById("tracker-root");
 
   let completion = {};
   let collapsed = {};
   let errorMsg = "";
+  let isSaving = false;
 
   function allTasks() {
     const out = [];
@@ -233,27 +247,30 @@
     return { done, total };
   }
 
-  async function loadState() {
-    try {
-      const result = await window.storage.get(STORAGE_KEY, true);
-      if (result && result.value) {
-        const saved = JSON.parse(result.value);
-        completion = saved.completion || {};
+  function startListening() {
+    docRef.onSnapshot(
+      (snap) => {
+        completion = (snap.exists && snap.data().completion) || {};
+        errorMsg = "";
+        render();
+      },
+      (err) => {
+        errorMsg = "No se pudo conectar con la base de datos.";
+        render();
       }
-    } catch (e) {
-      // no saved state yet
-    }
-    render();
+    );
   }
 
   async function saveState() {
+    isSaving = true;
     try {
-      const result = await window.storage.set(STORAGE_KEY, JSON.stringify({ completion }), true);
-      if (!result) { errorMsg = "No se pudo guardar. Intenta de nuevo."; render(); }
+      await docRef.set({ completion }, { merge: true });
+      errorMsg = "";
     } catch (e) {
       errorMsg = "No se pudo guardar. Intenta de nuevo.";
-      render();
     }
+    isSaving = false;
+    render();
   }
 
   function checkSvg() {
@@ -405,6 +422,7 @@
     });
   }
 
-  loadState();
+  render();
+  startListening();
 })();
 </script>
