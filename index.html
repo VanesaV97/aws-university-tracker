@@ -1,0 +1,410 @@
+<div id="tracker-root"></div>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap');
+
+  #tracker-root {
+    --bg: #EAEAEA;
+    --card: #FFFFFF;
+    --card2: #F5F5F5;
+    --line: #E6E6E6;
+    --primary: #545386;
+    --primary-dark: #3E3D66;
+    --text: #252423;
+    --muted: #7B898A;
+    --done: #4AC5BB;
+    --done-text: #0F5C55;
+    font-family: 'Montserrat', wf_segoe-ui_normal, helvetica, arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 28px 20px 40px;
+    border-radius: 12px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  #tracker-root * { box-sizing: border-box; }
+
+  .tr-title { font-size: 21px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; color: var(--primary); }
+  .tr-sub { font-size: 13px; color: var(--muted); font-weight: 500; margin: 0 0 20px; line-height: 1.5; }
+
+  .tr-legend { display: flex; flex-wrap: wrap; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; }
+  .tr-legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--text); }
+  .tr-legend-title { font-size: 12px; font-weight: 700; color: var(--primary); width: 100%; margin-bottom: 2px; }
+  .tr-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  .tr-progress-wrap { margin-bottom: 16px; }
+  .tr-progress-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .tr-progress-label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .tr-progress-count { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tr-progress-track { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .tr-progress-fill { height: 100%; border-radius: 3px; transition: width 0.35s ease; }
+
+  .tr-participant-progress-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; }
+  .tr-participant-progress-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 12px; }
+  .tr-participant-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .tr-participant-row:last-child { margin-bottom: 0; }
+  .tr-participant-name { font-size: 12.5px; font-weight: 600; flex-shrink: 0; white-space: nowrap; }
+  .tr-participant-track { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .tr-participant-fill { height: 100%; border-radius: 3px; transition: width 0.35s ease; }
+  .tr-participant-count { font-size: 11.5px; font-weight: 700; width: 40px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .tr-race-note { font-size: 16px; font-weight: 700; color: var(--text); background: linear-gradient(135deg, #F5F4FA, #EFEEF8); border: 1.5px solid var(--primary); border-radius: 10px; padding: 18px 22px; margin: 0 0 20px; line-height: 1.6; text-align: center; }
+
+  .tr-group { background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 14px; overflow: hidden; }
+  .tr-group-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; cursor: pointer; user-select: none; background: var(--primary); }
+  .tr-group-title { font-size: 14px; font-weight: 600; color: #FFFFFF; }
+  .tr-group-meta { font-size: 12px; font-weight: 600; color: #FFFFFF; opacity: 0.9; font-variant-numeric: tabular-nums; }
+  .tr-group-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .tr-group-body { padding: 0 16px 14px; overflow-x: auto; }
+  .tr-group-body.collapsed { display: none; }
+  .tr-chevron { color: #FFFFFF; font-size: 12px; transition: transform 0.2s ease; }
+  .tr-chevron.open { transform: rotate(90deg); }
+
+  .tr-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 560px; }
+  .tr-table th { font-size: 11px; color: var(--muted); font-weight: 700; text-align: center; padding: 10px 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tr-table th.tr-task-col { text-align: left; }
+  .tr-table th:not(.tr-task-col) { width: 42px; }
+  .tr-table td { padding: 9px 4px; border-top: 1px solid var(--line); vertical-align: middle; }
+  .tr-row-overdue td { background: #FBEDED; }
+  .tr-row-soon td { background: #FCF6E2; }
+  .tr-task-name { font-size: 13.5px; font-weight: 500; line-height: 1.4; padding-right: 10px; }
+  .tr-due-badge { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-top: 4px; white-space: nowrap; }
+
+  .tr-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid #B3B3B3; background: var(--card2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; margin: 0 auto; }
+  .tr-checkbox.checked { background: var(--done); border-color: var(--done); }
+  .tr-checkbox.overdue { border-color: #BB4A4A; border-width: 2px; background: #F7E6E6; }
+  .tr-checkbox.soon { border-color: #D9A400; border-width: 2px; background: #FBF1D6; }
+  .tr-checkbox svg { opacity: 0; width: 11px; height: 11px; }
+  .tr-checkbox.checked svg { opacity: 1; }
+
+  .tr-footer { margin-top: 16px; font-size: 11.5px; color: var(--muted); font-weight: 500; text-align: center; }
+  .tr-error { color: #BB4A4A; font-size: 12px; font-weight: 600; text-align: center; margin-top: 10px; }
+</style>
+
+<script>
+(function () {
+  const PARTICIPANTS = [
+    { id: "arley", name: "Arley Mora", gender: "m" },
+    { id: "arnold", name: "Arnold Acero", gender: "m" },
+    { id: "catalina", name: "Catalina Castañeda", gender: "f" },
+    { id: "claudia", name: "Claudia Herrera", gender: "f" },
+    { id: "daniel", name: "Daniel Rodriguez", gender: "m" },
+    { id: "nicolas", name: "Nicolas Rowland", gender: "m" },
+    { id: "vanesa", name: "Vanesa Villegas", gender: "f" }
+  ];
+
+  const GROUPS = [
+    {
+      id: "logistica",
+      label: "Primeros pasos",
+      tasks: [
+        { text: "Registrarse en Discord" },
+        { text: "Registrarse en Tidwit" },
+        { text: "Ver video Kickoff" }
+      ]
+    },
+    {
+      id: "clases",
+      label: "Clases y aprendizaje",
+      tasks: [
+        { text: "Ver los videos asincrónicos de Clase 1 y 2", due: "2026-09-17" },
+        { text: "Quiz Clase 1", due: "2026-09-17" },
+        { text: "Quiz Clase 2", due: "2026-09-17" },
+        { text: "Asistir clase sincrónica 17 septiembre", due: "2026-09-17" }
+      ]
+    },
+    {
+      id: "proyecto",
+      label: "Proyecto final",
+      tasks: [
+        { text: "Definir el caso de uso de negocio para lluvia de ideas", due: "2026-09-16" },
+        { text: "Documentar por qué el caso de uso es relevante para la compañía", due: "2026-09-16" },
+        { text: "Investigar casos de éxito similares", due: "2026-09-16" },
+        { text: "Bloquear en calendario para los Acceleration (1 oct, 2 nov) y el Party (19-20 nov)" }
+      ]
+    }
+  ];
+
+  const STORAGE_KEY = "aws-university-task-tracker-v5";
+  const root = document.getElementById("tracker-root");
+
+  let completion = {};
+  let collapsed = {};
+  let errorMsg = "";
+
+  function allTasks() {
+    const out = [];
+    GROUPS.forEach(g => g.tasks.forEach((t, i) => out.push(g.id + "-" + i)));
+    return out;
+  }
+
+  function dueStatus(dueStr) {
+    if (!dueStr) return null;
+    const MS_DAY = 86400000;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueStr + "T00:00:00");
+    const diffDays = Math.round((due - today) / MS_DAY);
+    let level;
+    if (diffDays < 0) level = "overdue";
+    else if (diffDays <= 3) level = "soon";
+    else level = "normal";
+    const label = due.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
+    return { level, diffDays, label };
+  }
+
+  function dueBadgeHtml(dueStr) {
+    const s = dueStatus(dueStr);
+    if (!s) return "";
+    const colors = { overdue: "#BB4A4A", soon: "#D9A400", normal: "#7B898A" };
+    const bg = { overdue: "#F7E6E6", soon: "#FBF1D6", normal: "#F0F0F0" };
+    let text;
+    if (s.level === "overdue") text = "Venció " + s.label;
+    else if (s.diffDays === 0) text = "Vence hoy";
+    else text = "Vence " + s.label;
+    return `<span class="tr-due-badge" style="color:${colors[s.level]}; background:${bg[s.level]}">${text}</span>`;
+  }
+
+
+  function cellKey(taskKey, pid) { return taskKey + "::" + pid; }
+
+  function isChecked(taskKey, pid) { return !!completion[cellKey(taskKey, pid)]; }
+
+  function toggleCell(taskKey, pid) {
+    const k = cellKey(taskKey, pid);
+    completion[k] = !completion[k];
+    render();
+    saveState();
+  }
+
+  function initials(name) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  function toggleCollapse(id) {
+    collapsed[id] = !collapsed[id];
+    render();
+  }
+
+  function semaforoColor(pct) {
+    if (pct < 34) return "#BB4A4A";
+    if (pct < 67) return "#D9A400";
+    return "#3F9142";
+  }
+
+  function firstName(name) {
+    return name.trim().split(/\s+/)[0];
+  }
+
+  function joinNames(arr) {
+    if (arr.length === 1) return arr[0];
+    if (arr.length === 2) return arr[0] + " y " + arr[1];
+    return arr.slice(0, -1).join(", ") + " y " + arr[arr.length - 1];
+  }
+
+  function joinNamesHtml(arr, color) {
+    const spans = arr.map(n => `<span style="color:${color}">${n}</span>`);
+    if (spans.length === 1) return spans[0];
+    if (spans.length === 2) return spans[0] + " y " + spans[1];
+    return spans.slice(0, -1).join(", ") + " y " + spans[spans.length - 1];
+  }
+
+  function overallProgress() {
+    const tasks = allTasks();
+    const total = tasks.length * PARTICIPANTS.length;
+    let done = 0;
+    tasks.forEach(t => PARTICIPANTS.forEach(p => { if (isChecked(t, p.id)) done++; }));
+    return { done, total };
+  }
+
+  function groupProgress(group) {
+    const tasks = group.tasks.map((_, i) => group.id + "-" + i);
+    const total = tasks.length * PARTICIPANTS.length;
+    let done = 0;
+    tasks.forEach(t => PARTICIPANTS.forEach(p => { if (isChecked(t, p.id)) done++; }));
+    return { done, total };
+  }
+
+  function participantProgress(pid) {
+    const tasks = allTasks();
+    const total = tasks.length;
+    let done = 0;
+    tasks.forEach(t => { if (isChecked(t, pid)) done++; });
+    return { done, total };
+  }
+
+  async function loadState() {
+    try {
+      const result = await window.storage.get(STORAGE_KEY, true);
+      if (result && result.value) {
+        const saved = JSON.parse(result.value);
+        completion = saved.completion || {};
+      }
+    } catch (e) {
+      // no saved state yet
+    }
+    render();
+  }
+
+  async function saveState() {
+    try {
+      const result = await window.storage.set(STORAGE_KEY, JSON.stringify({ completion }), true);
+      if (!result) { errorMsg = "No se pudo guardar. Intenta de nuevo."; render(); }
+    } catch (e) {
+      errorMsg = "No se pudo guardar. Intenta de nuevo.";
+      render();
+    }
+  }
+
+  function checkSvg() {
+    return '<svg viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="#0F5C55" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function render() {
+    const { done, total } = overallProgress();
+    const pct = total ? Math.round((done / total) * 100) : 0;
+
+    let html = `
+      <p class="tr-title">Seguimiento tareas Universidad de GenAI de AWS</p>
+      <p class="tr-sub">Cada tarea que completas suma al éxito del equipo. Para contribuir con el progreso general, ubica las iniciales de tu nombre en el listado de abajo y marca la casilla cada vez que logres una actividad.</p>
+
+      <div class="tr-legend">
+        <span class="tr-legend-title">Guía de vencimientos:</span>
+        <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#7B898A"></span>A tiempo — faltan más de 3 días</div>
+        <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#D9A400"></span>Próxima a vencer — 3 días o menos</div>
+        <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#BB4A4A"></span>Vencida — ya pasó la fecha límite</div>
+      </div>
+
+      <div class="tr-progress-wrap">
+        <div class="tr-progress-row">
+          <span class="tr-progress-label">Progreso general</span>
+          <span class="tr-progress-count" style="color:${semaforoColor(pct)}">${pct}% · ${done}/${total}</span>
+        </div>
+        <div class="tr-progress-track"><div class="tr-progress-fill" style="width:${pct}%; background:${semaforoColor(pct)}"></div></div>
+      </div>
+    `;
+
+    const pctList = PARTICIPANTS.map(p => {
+      const pp = participantProgress(p.id);
+      return { p, pct: pp.total ? Math.round((pp.done / pp.total) * 100) : 0 };
+    });
+    const maxPct = pctList.length ? Math.max(...pctList.map(x => x.pct)) : 0;
+    const minPct = pctList.length ? Math.min(...pctList.map(x => x.pct)) : 0;
+    const leaders = pctList.filter(x => x.pct === maxPct).map(x => x.p);
+    const laggards = pctList.filter(x => x.pct === minPct).map(x => x.p);
+    if (maxPct > 0 && maxPct !== minPct) {
+      const leaderNames = leaders.map(p => firstName(p.name));
+      const laggardNames = laggards.map(p => firstName(p.name));
+      const isPluralLeaders = leaders.length > 1;
+      const leaderGenderF = leaders.every(p => p.gender === "f");
+      const isPluralLaggards = laggards.length > 1;
+
+      const PHRASES = [
+        { s: "va al frente", p: "van al frente" },
+        { s: "lidera el marcador", p: "lideran el marcador" },
+        { s: "se roba el show", p: "se roban el show" },
+        { s: "va volando", p: "van volando" },
+        { s: "domina la tabla", p: "dominan la tabla" },
+        { s: "marca el paso", p: "marcan el paso" }
+      ];
+      const phrase = PHRASES[Math.floor(Math.random() * PHRASES.length)];
+      const verbPhrase = isPluralLeaders ? phrase.p : phrase.s;
+
+      let alcanzarWord;
+      if (isPluralLeaders) alcanzarWord = leaderGenderF ? "alcanzarlas" : "alcanzarlos";
+      else alcanzarWord = leaderGenderF ? "alcanzarla" : "alcanzarlo";
+      const pueden = isPluralLaggards ? "ustedes pueden" : "tú puedes";
+
+      html += `
+        <div class="tr-race-note">
+          🏆 ${joinNamesHtml(leaderNames, 'var(--done-text)')} ${verbPhrase} con ${maxPct}% — ¡vamos ${joinNamesHtml(laggardNames, 'var(--primary)')}, ${pueden} ${alcanzarWord}!
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="tr-participant-progress-wrap">
+        <div class="tr-participant-progress-label">Progreso por participante</div>
+    `;
+    PARTICIPANTS.forEach(p => {
+      const pp = participantProgress(p.id);
+      const ppct = pp.total ? Math.round((pp.done / pp.total) * 100) : 0;
+      html += `
+        <div class="tr-participant-row">
+          <span class="tr-participant-name" title="${p.name}">${p.name} (${initials(p.name)})</span>
+          <div class="tr-participant-track"><div class="tr-participant-fill" style="width:${ppct}%; background:${semaforoColor(ppct)}"></div></div>
+          <span class="tr-participant-count" style="color:${semaforoColor(ppct)}">${ppct}%</span>
+        </div>
+      `;
+    });
+    html += `</div>`;
+
+    GROUPS.forEach(group => {
+      const g = groupProgress(group);
+      const gpct = g.total ? Math.round((g.done / g.total) * 100) : 0;
+      const isCollapsed = !!collapsed[group.id];
+      html += `
+        <div class="tr-group">
+          <div class="tr-group-head" data-toggle="${group.id}">
+            <span class="tr-group-title">${group.label}</span>
+            <span style="display:flex; align-items:center; gap:10px;">
+              <span class="tr-group-dot" style="background:${semaforoColor(gpct)}"></span>
+              <span class="tr-group-meta">${gpct}%</span>
+              <span class="tr-chevron ${isCollapsed ? '' : 'open'}">▸</span>
+            </span>
+          </div>
+          <div class="tr-group-body ${isCollapsed ? 'collapsed' : ''}">
+            <table class="tr-table">
+              <thead><tr>
+                <th class="tr-task-col">Tarea</th>
+      `;
+      PARTICIPANTS.forEach(p => { html += `<th title="${p.name}">${initials(p.name)}</th>`; });
+      html += `</tr></thead><tbody>`;
+      group.tasks.forEach((task, i) => {
+        const key = group.id + "-" + i;
+        const status = dueStatus(task.due);
+        let rowClass = "";
+        if (status) {
+          if (status.level === "overdue") rowClass = "tr-row-overdue";
+          else if (status.level === "soon") rowClass = "tr-row-soon";
+        }
+        html += `<tr class="${rowClass}"><td class="tr-task-name">${task.text}${dueBadgeHtml(task.due)}</td>`;
+        PARTICIPANTS.forEach(p => {
+          const checked = isChecked(key, p.id);
+          let extraClass = "";
+          if (!checked && status) {
+            if (status.level === "overdue") extraClass = "overdue";
+            else if (status.level === "soon") extraClass = "soon";
+          }
+          html += `
+            <td>
+              <div class="tr-checkbox ${checked ? 'checked' : ''} ${extraClass}" data-toggle-cell="${key}::${p.id}">
+                ${checkSvg()}
+              </div>
+            </td>
+          `;
+        });
+        html += `</tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+    });
+
+    if (errorMsg) html += `<div class="tr-error">${errorMsg}</div>`;
+    html += `<div class="tr-footer">Seguimiento AWS University</div>`;
+
+    root.innerHTML = html;
+
+    root.querySelectorAll("[data-toggle]").forEach(el => {
+      el.addEventListener("click", () => toggleCollapse(el.getAttribute("data-toggle")));
+    });
+    root.querySelectorAll("[data-toggle-cell]").forEach(el => {
+      el.addEventListener("click", () => {
+        const [taskKey, pid] = el.getAttribute("data-toggle-cell").split("::");
+        toggleCell(taskKey, pid);
+      });
+    });
+  }
+
+  loadState();
+})();
+</script>
