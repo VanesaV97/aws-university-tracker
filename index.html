@@ -89,8 +89,8 @@
   .tr-footer { margin-top: 16px; font-size: 11.5px; color: var(--muted); font-weight: 500; text-align: center; }
   .tr-error { color: #BB4A4A; font-size: 12px; font-weight: 600; text-align: center; margin-top: 10px; }
   .tr-alert-box { background: #FBF1D6; border: 1.5px solid #D9A400; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; text-align: center; }
-  .tr-alert-title { font-size: 15px; font-weight: 700; color: #7A5B00; margin-bottom: 10px; }
-  .tr-alert-list { list-style: none; padding: 0; margin: 0 0 10px; font-size: 13.5px; color: #7A5B00; line-height: 1.9; }
+  .tr-alert-title { font-size: 15px; font-weight: 700; color: #C2570A; margin-bottom: 10px; }
+  .tr-alert-list { list-style: none; padding: 0; margin: 0 0 10px; font-size: 12px; color: var(--text); line-height: 1.8; }
   .tr-alert-footer { font-size: 13px; font-weight: 600; color: #7A5B00; }
 </style>
 
@@ -311,14 +311,14 @@
         }
       });
     });
+    soonTasks.sort((a, b) => a.diffDays - b.diffDays);
     if (soonTasks.length > 0) {
       html += `<div class="tr-alert-box">`;
       html += `<div class="tr-alert-title">⚠️ OJO: las siguientes tareas están próximas a vencer</div>`;
       html += `<ul class="tr-alert-list">`;
       soonTasks.forEach(t => {
         const when = t.diffDays === 0 ? "hoy" : (t.diffDays === 1 ? "mañana" : "el " + t.label);
-        const itemColor = t.level === "today" ? "#C2570A" : "#7A5B00";
-        html += `<li style="color:${itemColor}"><strong>${t.text}</strong> — vence ${when}</li>`;
+        html += `<li><strong>${t.text}</strong> — vence ${when}</li>`;
       });
       html += `</ul>`;
       html += `<div class="tr-alert-footer">No olvides completarlas para no afectar el progreso del grupo.</div>`;
@@ -331,7 +331,7 @@
         <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#7B898A"></span>A tiempo — faltan más de 3 días</div>
         <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#D9A400"></span>Próxima a vencer — 3 días o menos</div>
         <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#C2570A"></span>Vence hoy</div>
-        <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#BB4A4A"></span>Vencida — ya pasó la fecha límite</div>
+        <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#BB4A4A"></span>Vencida</div>
       </div>
 
       <div class="tr-progress-wrap">
