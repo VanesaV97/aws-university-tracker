@@ -73,6 +73,7 @@
   .tr-table th:not(.tr-task-col) { width: 42px; }
   .tr-table td { padding: 9px 4px; border-top: 1px solid var(--line); vertical-align: middle; }
   .tr-row-overdue td { background: #FBEDED; }
+  .tr-row-today td { background: #FCEADB; }
   .tr-row-soon td { background: #FCF6E2; }
   .tr-task-name { font-size: 13.5px; font-weight: 500; line-height: 1.4; padding-right: 10px; }
   .tr-due-badge { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-top: 4px; white-space: nowrap; }
@@ -80,14 +81,17 @@
   .tr-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid #B3B3B3; background: var(--card2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; margin: 0 auto; }
   .tr-checkbox.checked { background: var(--done); border-color: var(--done); }
   .tr-checkbox.overdue { border-color: #BB4A4A; border-width: 2px; background: #F7E6E6; }
+  .tr-checkbox.today { border-color: #C2570A; border-width: 2px; background: #FBE6D3; }
   .tr-checkbox.soon { border-color: #D9A400; border-width: 2px; background: #FBF1D6; }
   .tr-checkbox svg { opacity: 0; width: 11px; height: 11px; }
   .tr-checkbox.checked svg { opacity: 1; }
 
   .tr-footer { margin-top: 16px; font-size: 11.5px; color: var(--muted); font-weight: 500; text-align: center; }
   .tr-error { color: #BB4A4A; font-size: 12px; font-weight: 600; text-align: center; margin-top: 10px; }
-  .tr-alerts { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-  .tr-alert-item { font-size: 15px; font-weight: 600; color: #7A5B00; background: #FBF1D6; border: 1.5px solid #D9A400; border-radius: 8px; padding: 14px 18px; line-height: 1.6; text-align: center; }
+  .tr-alert-box { background: #FBF1D6; border: 1.5px solid #D9A400; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px; text-align: center; }
+  .tr-alert-title { font-size: 15px; font-weight: 700; color: #7A5B00; margin-bottom: 10px; }
+  .tr-alert-list { list-style: none; padding: 0; margin: 0 0 10px; font-size: 13.5px; color: #7A5B00; line-height: 1.9; }
+  .tr-alert-footer { font-size: 13px; font-weight: 600; color: #7A5B00; }
 </style>
 
 <script>
@@ -170,6 +174,7 @@
     const diffDays = Math.round((due - today) / MS_DAY);
     let level;
     if (diffDays < 0) level = "overdue";
+    else if (diffDays === 0) level = "today";
     else if (diffDays <= 3) level = "soon";
     else level = "normal";
     const label = due.toLocaleDateString("es-CO", { day: "numeric", month: "short" });
@@ -179,11 +184,11 @@
   function dueBadgeHtml(dueStr) {
     const s = dueStatus(dueStr);
     if (!s) return "";
-    const colors = { overdue: "#BB4A4A", soon: "#D9A400", normal: "#7B898A" };
-    const bg = { overdue: "#F7E6E6", soon: "#FBF1D6", normal: "#F0F0F0" };
+    const colors = { overdue: "#BB4A4A", today: "#C2570A", soon: "#D9A400", normal: "#7B898A" };
+    const bg = { overdue: "#F7E6E6", today: "#FBE6D3", soon: "#FBF1D6", normal: "#F0F0F0" };
     let text;
     if (s.level === "overdue") text = "Venció " + s.label;
-    else if (s.diffDays === 0) text = "Vence hoy";
+    else if (s.level === "today") text = "Vence hoy";
     else text = "Vence " + s.label;
     return `<span class="tr-due-badge" style="color:${colors[s.level]}; background:${bg[s.level]}">${text}</span>`;
   }
@@ -301,21 +306,22 @@
     GROUPS.forEach(group => {
       group.tasks.forEach(task => {
         const status = dueStatus(task.due);
-        if (status && status.level === "soon") {
-          soonTasks.push({ text: task.text, label: status.label, diffDays: status.diffDays });
+        if (status && (status.level === "soon" || status.level === "today")) {
+          soonTasks.push({ text: task.text, label: status.label, diffDays: status.diffDays, level: status.level });
         }
       });
     });
     if (soonTasks.length > 0) {
-      html += `<div class="tr-alerts">`;
+      html += `<div class="tr-alert-box">`;
+      html += `<div class="tr-alert-title">⚠️ OJO: las siguientes tareas están próximas a vencer</div>`;
+      html += `<ul class="tr-alert-list">`;
       soonTasks.forEach(t => {
         const when = t.diffDays === 0 ? "hoy" : (t.diffDays === 1 ? "mañana" : "el " + t.label);
-        html += `
-          <div class="tr-alert-item">
-            ⚠️ <strong>OJO:</strong> la tarea "${t.text}" está próxima a vencer (${when}) — no olvides completarla para no afectar el progreso del grupo.
-          </div>
-        `;
+        const itemColor = t.level === "today" ? "#C2570A" : "#7A5B00";
+        html += `<li style="color:${itemColor}"><strong>${t.text}</strong> — vence ${when}</li>`;
       });
+      html += `</ul>`;
+      html += `<div class="tr-alert-footer">No olvides completarlas para no afectar el progreso del grupo.</div>`;
       html += `</div>`;
     }
 
@@ -324,6 +330,7 @@
         <span class="tr-legend-title">Guía de vencimientos:</span>
         <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#7B898A"></span>A tiempo — faltan más de 3 días</div>
         <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#D9A400"></span>Próxima a vencer — 3 días o menos</div>
+        <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#C2570A"></span>Vence hoy</div>
         <div class="tr-legend-item"><span class="tr-legend-dot" style="background:#BB4A4A"></span>Vencida — ya pasó la fecha límite</div>
       </div>
 
@@ -418,6 +425,7 @@
         let rowClass = "";
         if (status) {
           if (status.level === "overdue") rowClass = "tr-row-overdue";
+          else if (status.level === "today") rowClass = "tr-row-today";
           else if (status.level === "soon") rowClass = "tr-row-soon";
         }
         html += `<tr class="${rowClass}"><td class="tr-task-name">${task.text}${dueBadgeHtml(task.due)}</td>`;
@@ -426,6 +434,7 @@
           let extraClass = "";
           if (!checked && status) {
             if (status.level === "overdue") extraClass = "overdue";
+            else if (status.level === "today") extraClass = "today";
             else if (status.level === "soon") extraClass = "soon";
           }
           html += `
