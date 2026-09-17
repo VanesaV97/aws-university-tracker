@@ -75,6 +75,7 @@
   .tr-row-overdue td { background: #FBEDED; }
   .tr-row-today td { background: #FCEADB; }
   .tr-row-soon td { background: #FCF6E2; }
+  .tr-row-complete td { background: #E6F5F2; }
   .tr-task-name { font-size: 13.5px; font-weight: 500; line-height: 1.4; padding-right: 10px; }
   .tr-due-badge { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; margin-top: 4px; white-space: nowrap; }
 
@@ -123,9 +124,13 @@
       tasks: [
         { text: "Ver el video asincrónico de Clase 1", due: "2026-09-17" },
         { text: "Ver el video asincrónico de Clase 2", due: "2026-09-17" },
-        { text: "Quiz Clase 1", due: "2026-09-14" },
-        { text: "Quiz Clase 2", due: "2026-09-17" },
-        { text: "Asistir clase sincrónica 17 septiembre", due: "2026-09-17" }
+        { text: "Quiz Clase 1", due: "2026-09-18" },
+        { text: "Quiz Clase 2", due: "2026-09-18" },
+        { text: "Asistir clase sincrónica 17 septiembre", due: "2026-09-17" },
+        { text: "Ver el video asincrónico de Clase 3", due: "2026-09-23" },
+        { text: "Ver el video asincrónico de Clase 4", due: "2026-09-23" },
+        { text: "Quiz Clase 3", due: "2026-09-25" },
+        { text: "Quiz Clase 4", due: "2026-09-25" }
       ]
     },
     {
@@ -304,9 +309,11 @@
 
     const soonTasks = [];
     GROUPS.forEach(group => {
-      group.tasks.forEach(task => {
+      group.tasks.forEach((task, i) => {
         const status = dueStatus(task.due);
-        if (status && (status.level === "soon" || status.level === "today")) {
+        const key = group.id + "-" + i;
+        const allDone = PARTICIPANTS.length > 0 && PARTICIPANTS.every(p => isChecked(key, p.id));
+        if (!allDone && status && (status.level === "soon" || status.level === "today")) {
           soonTasks.push({ text: task.text, label: status.label, diffDays: status.diffDays, level: status.level });
         }
       });
@@ -422,8 +429,11 @@
       group.tasks.forEach((task, i) => {
         const key = group.id + "-" + i;
         const status = dueStatus(task.due);
+        const allDone = PARTICIPANTS.length > 0 && PARTICIPANTS.every(p => isChecked(key, p.id));
         let rowClass = "";
-        if (status) {
+        if (allDone) {
+          rowClass = "tr-row-complete";
+        } else if (status) {
           if (status.level === "overdue") rowClass = "tr-row-overdue";
           else if (status.level === "today") rowClass = "tr-row-today";
           else if (status.level === "soon") rowClass = "tr-row-soon";
@@ -432,7 +442,7 @@
         PARTICIPANTS.forEach(p => {
           const checked = isChecked(key, p.id);
           let extraClass = "";
-          if (!checked && status) {
+          if (!checked && !allDone && status) {
             if (status.level === "overdue") extraClass = "overdue";
             else if (status.level === "today") extraClass = "today";
             else if (status.level === "soon") extraClass = "soon";
