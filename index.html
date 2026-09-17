@@ -438,7 +438,7 @@
           else if (status.level === "today") rowClass = "tr-row-today";
           else if (status.level === "soon") rowClass = "tr-row-soon";
         }
-        html += `<tr class="${rowClass}"><td class="tr-task-name">${task.text}${dueBadgeHtml(task.due)}</td>`;
+        html += `<tr class="${rowClass}"><td class="tr-task-name">${task.text}${allDone ? '' : dueBadgeHtml(task.due)}</td>`;
         PARTICIPANTS.forEach(p => {
           const checked = isChecked(key, p.id);
           let extraClass = "";
